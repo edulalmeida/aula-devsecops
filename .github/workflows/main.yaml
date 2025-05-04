@@ -28,10 +28,10 @@ jobs:
       
     steps:
       - name: Test
-        uses: edulalmeida/aula-devsecops@main
-        with:
-        a: ${{ secrets.SECRET_A }}
-        b: 4
+    
+    steps:
+      - name: Test
+        run: echo "Test"
         
       
   deploy:

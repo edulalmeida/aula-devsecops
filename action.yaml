@@ -1,0 +1,21 @@
+name: 'Soma'
+author: 'edulalmeida'
+description: 'Soma'
+inputs:
+  a:
+    required: true
+  b:
+    required: false
+runs:
+  using: 'composite'
+  steps:
+
+    - name: setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          
+    - name: run Soma
+          shell: bash
+          run: python sast.py -d=${{ inputs.a }} -l=${{ inputs.b }}
+          

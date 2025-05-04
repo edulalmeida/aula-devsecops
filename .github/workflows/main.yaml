@@ -21,14 +21,19 @@ jobs:
       # Runs a single command using the runners shell
       - name: Build
         run: echo "Build"
+  
   test:
     runs-on: ubuntu-latest
     needs: build
       
     steps:
       - name: Test
-        run: echo "Test"
-
+        uses: edulalmeida/aula-devsecops@main
+        with:
+        a: ${{ secrets.SECRET_A }}
+        b: 4
+        
+      
   deploy:
     runs-on: ubuntu-latest
     needs: test

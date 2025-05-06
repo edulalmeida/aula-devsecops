@@ -46,4 +46,4 @@ jobs:
       
     steps:
       - name: Deploy
-        run: https://hub.docker.com/repository/docker/edulalmeida/hello-aula-github
+        run: docker run https://hub.docker.com/repository/docker/edulalmeida/hello-aula-github

@@ -3,47 +3,87 @@
 name: CI
 
 on:
-  schedule:
-    - cron: '22 18 * * *'
   push:
-    branches: [ main ]
+    branches: [ devsecops ]
   
   # Allows you to run this workflow manually from the Actions tab
   # workflow_dispatch:
 
 jobs:
-
-  build:
-    runs-on: ubuntu-latest
-
+  security_scan:
+    runs-on: ubuntu-20.04
     steps:
-   
-      # Runs a single command using the runners shell
-      - name: Build
-        run: echo "Build"
+      - name: Checkout do Código
+        uses: actions/checkout@v3
   
-  test:
-    runs-on: ubuntu-latest
-    needs: build
+  
+  
+      - name: Adicionar repositório do Docker
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y apt-transport-https ca-certificates curl gnupg lsb-release
+          curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo tee /etc/apt/keyring
+          echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+          sudo apt-get update
       
-    steps:
-      - name: Test
-        uses: edulalmeida/aula-devsecops@main
-        with:
-          a: 1
-          b: 2
-      - name: File
-        run: echo "test" > test.txt
+      - name: Listar versões disponíveis do Docker
+        run: apt-cache madison docker-ce
 
-      - name: Download
-        uses: actions/upload-artifact@v4
-        with:
-          path: test.txt
-             
-  deploy:
-    runs-on: ubuntu-latest
-    needs: test
+      - name: Instalar Docker versão 22 manualmente
+        run: |
+          sudo apt-get install -y docker-ce=5:20.10.13~3-0~ubuntu-focal \
+                                  docker-ce-cli=5:20.10.13~3-0~ubuntu-focal \
+                                  containerd.io --allow-dowgrades
+           sudo apt-mark hold docker-ce docker-ce-cli containerd.io  
       
-    steps:
-      - name: Deploy
-        run: docker run edulalmeida/hello-aula-github
+        
+      - name: Verificar versão final do Docker instalada
+        run: docker --version
+
+      - name: SAST
+        run: |
+          mkdir reports
+          docker run -v /var/run/docker.sock:/var/run/docker.sock -v $(pwd):/src/horusec horuszup/horusec-cli:latest horusec start -p /src/horusec -P $(pwd) -o='sarif' -O=/src/horusec/reports/horusec_report.sarif
+
+      - name: Archive horusec report
+        uses: action/upload-artifact@v4
+        with:
+          name: horusec_report
+          path: reports/horusec_report.sarif
+
+
+           
+#  build:
+#    runs-on: ubuntu-latest
+
+#    steps:
+   
+ #     # Runs a single command using the runners shell
+#      - name: Build
+#        run: echo "Build"
+  
+#  test:
+#    runs-on: ubuntu-latest
+#    needs: build
+      
+#    steps:
+#      - name: Test
+#        uses: edulalmeida/aula-devsecops@main
+#        with:
+#          a: 1
+#          b: 2
+#      - name: File
+ #       run: echo "test" > test.txt
+
+ #     - name: Download
+  #      uses: actions/upload-artifact@v4
+  #      with:
+ #         path: test.txt
+             
+#  deploy:
+#    runs-on: ubuntu-latest
+#    needs: test
+      
+#    steps:
+#      - name: Deploy
+ #       run: docker run edulalmeida/hello-aula-github

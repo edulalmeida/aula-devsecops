@@ -6,6 +6,11 @@ on:
   push:
     branches: [ devsecops ]
   
+permissions:
+  contents: read
+  security-events: write
+  issues: write
+  
   # Allows you to run this workflow manually from the Actions tab
   # workflow_dispatch:
 
@@ -15,15 +20,13 @@ jobs:
     steps:
       - name: Checkout do Código
         uses: actions/checkout@v3
-  
-  
-  
+    
       - name: Adicionar repositório do Docker
         run: |
           sudo apt-get update
           sudo apt-get install -y apt-transport-https ca-certificates curl gnupg lsb-release
-          curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo tee /etc/apt/keyring
-          echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+          curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo tee /etc/apt/keyrings/docker.asc > /dev/null
+          echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu focal stable" | sudo tee /etc/apt/sources.list
           sudo apt-get update
       
       - name: Listar versões disponíveis do Docker
@@ -45,11 +48,28 @@ jobs:
           mkdir reports
           docker run -v /var/run/docker.sock:/var/run/docker.sock -v $(pwd):/src/horusec horuszup/horusec-cli:latest horusec start -p /src/horusec -P $(pwd) -o='sarif' -O=/src/horusec/reports/horusec_report.sarif
 
+
       - name: Archive horusec report
         uses: action/upload-artifact@v4
         with:
           name: horusec_report
           path: reports/horusec_report.sarif
+
+      - name: Ensure 'security' label exists
+        run: |
+          gh label create "security" --description "Security vulnerabilities" --color FF0000 || echo "Label already exists"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Archive horusec report
+        run: |
+        with:
+          name: horusec_report
+          path: reports/horusec_report.sarif
+
+
+
+
 
 
            
